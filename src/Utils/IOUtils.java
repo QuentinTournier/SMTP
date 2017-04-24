@@ -42,10 +42,12 @@ public class IOUtils{
             message += ".";
         }
         message = message.replaceAll("[\r,\n]", "");
+        System.out.println("received: " + message);
         return message;
     }
 
     public void send(String message) throws IOException {
+        message += "\r\n";
         os.write(message.getBytes());
     }
 }
