@@ -1,16 +1,14 @@
 package Client;
 
+import Utils.Message;
+
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.UnknownHostException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Scanner;
 
 
 /**
@@ -31,11 +29,22 @@ public class Client {
     public Client(String hostName, int port) {
         this.hostName = hostName;
         this.port = port;
-        this.state = "";
+        this.state = "stopped";
         this.inFromUser = new BufferedReader(new InputStreamReader(System.in));
     }
 
     //Methods
+
+    public void run() {
+        System.out.println("SMTP Client V0.01");
+        //this.initialize();
+        //this.connect();
+
+        while(!this.state.equals("waitingForQuit")){
+            Message message = this.typeMessage();
+
+        }
+    }
 
     private void initialize() {
         try {
@@ -64,18 +73,16 @@ public class Client {
             this.output = new PrintWriter(this.clientSocket.getOutputStream());
             this.input = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
 
+            //State
+            this.state = "initialisation";
+
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void run() {
-        System.out.println("SMTP Client V0.01");
-        //this.initialize();
-        this.typeMessage();
-    }
+    private Message typeMessage() {
 
-    private void typeMessage() {
         String sender = "";
         ArrayList<String> recipients = new ArrayList<>();
         String mailText = "";
@@ -124,18 +131,26 @@ public class Client {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("Sender : " + sender);
+
+        return new Message(sender, recipients, mailText);
+
+        /*System.out.println("Sender : " + sender);
         System.out.println("Recipients : " + recipients);
-        System.out.print("Message text : " + mailText);
+        System.out.print("Message text : " + mailText);*/
     }
 
-    private void write(String sentence) {
-        this.output.println(sentence);
-        this.output.flush();
-    }
-
-    private void engage() {
-
+    private void connect() {
+        System.out.println("Waiting for server ...");
+        String received = this.read();
+        if(received.startsWith("220")){
+            System.out.println("Server joined.");
+            this.send("EHLO");
+            this.state = "ready";
+        }
+        else{
+            System.out.println("Unable to contact server.");
+            this.state = "stopped";
+        }
     }
 
     //Stop
@@ -149,23 +164,30 @@ public class Client {
         System.out.println("Closed");
     }
 
-    //update the status
-    private Boolean updateStatus(String line) {
-        return null;
-    }
-
     // display the input or update the state
-    private void read() {
+    private String read() {
         String line = "";
-        Boolean update = false;
         try {
             line = this.input.readLine();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (line.contains("") || line.contains("")) {
-            update = updateStatus(line);
+        return line;
+    }
+
+    private void send(String sentence) {
+        this.output.println(sentence);
+        this.output.flush();
+    }
+
+    public void type(){
+        try {
+            String s = this.inFromUser.readLine();
+            if(s.contains("quit")){
+                this.state = "waitingForQuit";
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        if (!update) System.out.println(line);
     }
 }
