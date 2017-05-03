@@ -13,6 +13,7 @@ import java.util.ArrayList;
 
 /**
  * Created by franck on 4/3/17.
+ * This is the client code
  */
 public class Client {
 
@@ -36,16 +37,64 @@ public class Client {
     //Methods
 
     public void run() {
+        String sentence;
         System.out.println("SMTP Client V0.01");
-        //this.initialize();
-        //this.connect();
+        this.initialize();
+        this.connect();
 
         while(!this.state.equals("waitingForQuit")){
+
+            // Write your message
             Message message = this.typeMessage();
 
+            // Send the sender to the server
+            if(!this.state.equals("waitingForQuit")) {
+                sentence = "MAIL FROM " + message.getSender();
+                this.send(sentence);
+                sentence = this.read();
+                if (sentence.startsWith("250")) {
+                    this.state = "sendRecipients";
+                } else {
+                    System.out.println("Error, shutting down...");
+                    this.state = "waitingForQuit";
+                }
+            }
+
+            // Send all the recipients to the server
+            for (String s : message.getRecipients()) {
+                if (!this.state.equals("waitingForQuit")) {
+                    sentence = "RCPT " + s;
+                    this.send(sentence);
+                    sentence = this.read();
+                    if (!sentence.startsWith("503")) {
+                        System.out.println("Error, shutting down...");
+                        this.state = "waitingForQuit";
+                    }
+                }
+            }
+            if(!this.state.equals("waitingForQuit"))
+                this.state = "sendData";
+
+            // Send the datas to the server
+            if(!this.state.equals("waitingForQuit")) {
+                sentence = "DATA " + message.getText();
+                this.send(sentence);
+                sentence = this.read();
+                if (sentence.startsWith("354")) {
+                    this.state = "ready";
+                } else {
+                    System.out.println("Error, shutting down...");
+                    this.state = "waitingForQuit";
+                }
+            }
+
+            // Ask if the user wants to write an other message
+            System.out.println("Write an other message ? [Y/n]");
+            type();
         }
     }
 
+    // initialize the connection to the server
     private void initialize() {
         try {
             //Socket
@@ -81,11 +130,12 @@ public class Client {
         }
     }
 
+    // Asks to the user to write his message
     private Message typeMessage() {
 
         String sender = "";
         ArrayList<String> recipients = new ArrayList<>();
-        String mailText = "";
+        StringBuilder mailText = new StringBuilder();
 
         //Sender address
         System.out.println("Please enter your mail address.");
@@ -124,7 +174,7 @@ public class Client {
         try {
             String s = this.inFromUser.readLine();
             while(!s.equals(".")){
-                mailText += s + "\r\n";
+                mailText.append(s).append("\r\n");
                 s = this.inFromUser.readLine();
             }
 
@@ -132,13 +182,10 @@ public class Client {
             e.printStackTrace();
         }
 
-        return new Message(sender, recipients, mailText);
-
-        /*System.out.println("Sender : " + sender);
-        System.out.println("Recipients : " + recipients);
-        System.out.print("Message text : " + mailText);*/
+        return new Message(sender, recipients, mailText.toString());
     }
 
+    // connect to the server
     private void connect() {
         System.out.println("Waiting for server ...");
         String received = this.read();
@@ -153,7 +200,7 @@ public class Client {
         }
     }
 
-    //Stop
+    //Stop the client
     public void stop() {
         System.out.println("Closing...");
         try {
@@ -164,7 +211,7 @@ public class Client {
         System.out.println("Closed");
     }
 
-    // display the input or update the state
+    // receive and return the server's message
     private String read() {
         String line = "";
         try {
@@ -175,15 +222,17 @@ public class Client {
         return line;
     }
 
+    // send sentence to the server
     private void send(String sentence) {
         this.output.println(sentence);
         this.output.flush();
     }
 
-    public void type(){
+    // Check if the user wants to quit the application
+    private void type(){
         try {
             String s = this.inFromUser.readLine();
-            if(s.contains("quit")){
+            if(s.equals("n") || s.equals("N") || s.equals("No") || s.equals("NO") || s.equals("quit") || s.equals("Quit") || s.equals("QUIT")){
                 this.state = "waitingForQuit";
             }
         } catch (IOException e) {

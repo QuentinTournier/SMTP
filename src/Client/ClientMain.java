@@ -8,7 +8,7 @@ public class ClientMain {
     public static void main (String[] args){
         Client cli = new Client("localhost", 3586);
         cli.run();
-        //cli.stop();
+        cli.stop();
     }
 }
 
