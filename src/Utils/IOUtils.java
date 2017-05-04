@@ -29,7 +29,7 @@ public class IOUtils{
             try {
                 data = is.read();
             } catch (IOException e) {
-                e.printStackTrace();
+               return "quitnonsafe";
             }
             if(data == -1){
                 return "quitnonsafe";
@@ -48,7 +48,6 @@ public class IOUtils{
             message += ".";
         }
         message = message.replaceAll("[\r,\n]", "");
-        System.out.println("received: " + message);
         return message;
     }
 

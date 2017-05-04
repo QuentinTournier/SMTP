@@ -33,13 +33,7 @@ public class Client {
         this.port = port;
         this.state = "stopped";
         this.inFromUser = new BufferedReader(new InputStreamReader(System.in));
-        try {
-        this.clientSocket = new Socket(this.hostName, this.port);
-        //Streams
-            this.ioSocket = new IOUtils(this.clientSocket);
-        } catch (IOException e) {
-            System.out.println("IAMGROOT "+e);
-        }
+
     }
 
     //Methods
@@ -47,7 +41,7 @@ public class Client {
     public void run() {
         String sentence;
         System.out.println("SMTP Client V0.01");
-//        this.initialize();
+        this.initialize();
         this.connect();
 
         while(!this.state.equals("waitingForQuit")){
@@ -74,10 +68,6 @@ public class Client {
                     sentence = "RCPT " + s;
                     ioSocket.send(sentence);
                     sentence = ioSocket.read();
-                    if (!sentence.startsWith("503")) {
-                        System.out.println("Error, shutting down...");
-                        this.state = "waitingForQuit";
-                    }
                 }
             }
             if(!this.state.equals("waitingForQuit"))
@@ -85,12 +75,14 @@ public class Client {
 
             // Send the datas to the server
             if(!this.state.equals("waitingForQuit")) {
-                sentence = "DATA " + message.getText();
+                sentence = "DATA";
                 ioSocket.send(sentence);
                 sentence = ioSocket.read();
                 if (sentence.startsWith("354")) {
+                    ioSocket.send(message.getText());
                     this.state = "ready";
-                } else {
+                }
+                else {
                     System.out.println("Error, shutting down...");
                     this.state = "waitingForQuit";
                 }
@@ -106,12 +98,7 @@ public class Client {
     private void initialize() {
         try {
             //Socket
-//            SSLSocketFactory fact = (SSLSocketFactory) SSLSocketFactory.getDefault();
-//            this.clientSocket = (SSLSocket) fact.createSocket(String.valueOf(this.hostName), this.port);
             this.clientSocket = new Socket(this.hostName, this.port);
-
-            //Setting ciphers
-//            this.clientSocket.setEnabledCipherSuites(clientSocket.getSupportedCipherSuites());
 
             //Streams
             this.ioSocket = new IOUtils(this.clientSocket);
@@ -171,6 +158,8 @@ public class Client {
                 mailText.append(s).append("\r\n");
                 s = this.inFromUser.readLine();
             }
+            mailText.append(s);
+
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -186,7 +175,13 @@ public class Client {
         if(received.startsWith("220")){
             System.out.println("Server joined.");
             ioSocket.send("EHLO client");
-            this.state = "ready";
+            received = ioSocket.read();
+            if(received.startsWith("250"))
+                this.state = "ready";
+            else {
+                System.out.println("Error on EHLO sequence.");
+                this.state = "waitingForQuit";
+            }
         }
         else{
             System.out.println("Unable to contact server.");
@@ -198,11 +193,15 @@ public class Client {
     public void stop() {
         System.out.println("Closing...");
         try {
+            ioSocket.send("QUIT");
+            String s = ioSocket.read();
+            if(s.startsWith("221")){
+                System.out.println("Closed");
+            }
             this.clientSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("Closed");
     }
 
    /* // receive and return the server's message
@@ -226,7 +225,7 @@ public class Client {
     private void type(){
         try {
             String s = this.inFromUser.readLine();
-            if(s.equals("n") || s.equals("N") || s.equals("No") || s.equals("NO") || s.equals("quit") || s.equals("Quit") || s.equals("QUIT")){
+            if(s.equalsIgnoreCase("n") || s.equalsIgnoreCase("no") || s.equalsIgnoreCase("quit")){
                 this.state = "waitingForQuit";
             }
         } catch (IOException e) {

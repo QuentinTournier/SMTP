@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -80,16 +81,16 @@ public class ThreadServer implements Runnable{
                     if (endOfMessage){
                         state = WAITINGMAIL;
                         String messageToWrite = "FROM : "+ sender+ "\r\n";
-                        messageToWrite += mail;
+                        messageToWrite += mail + "\r\n";
                         for (String recipient: recipients) {
                             String userName = recipient.split("@")[0];
                             Path file = (new File(STOCKPATH+userName+".txt")).toPath();
-                            Files.write(file,messageToWrite.getBytes(), StandardOpenOption.APPEND);
+                            if(Files.exists(file))
+                                Files.write(file,messageToWrite.getBytes(), StandardOpenOption.APPEND);
+                            else
+                                Files.write(file,messageToWrite.getBytes());
                         }
                         mail = "";
-                    }
-                    else{
-                        mail += message;
                     }
                     continue;
                 }
@@ -97,8 +98,8 @@ public class ThreadServer implements Runnable{
 
                 switch(cmd[0].toUpperCase()){
                     case "MAIL" :
-                        if(cmd.length >1 ){
-                            sender = cmd[1];
+                        if(cmd.length >2 ){
+                            sender = cmd[2];
                             recipients.clear();
                             ioSocket.send("250 OK");
                             state = WAITINGRCPT;

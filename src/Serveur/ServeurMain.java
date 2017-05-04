@@ -20,7 +20,7 @@ public class ServeurMain{
             while(true){
                 //SSLSocket connexion = (SSLSocket) server.accept();
                 Socket connexion = server.accept();
-                ThreadServer ts = new ThreadServer(connexion, "serveur1");
+                ThreadServer ts = new ThreadServer(connexion, "serveur1.fr");
                 new Thread(ts).start();
             }
         } catch (IOException e) {
