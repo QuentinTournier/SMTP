@@ -3,6 +3,7 @@ package Utils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.net.Socket;
 
 /**
@@ -18,13 +19,18 @@ public class IOUtils{
         this.os = connexion.getOutputStream();
     }
 
-    public String read() throws IOException {
+    public String read(){
         boolean cr = false;
         boolean lf = false;
         String message = "";
 
         while(!cr || !lf){
-            int data = is.read();
+            int data = 0;
+            try {
+                data = is.read();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             if(data == -1){
                 return "quitnonsafe";
             }
@@ -46,8 +52,13 @@ public class IOUtils{
         return message;
     }
 
-    public void send(String message) throws IOException {
+    public void send(String message) {
         message += "\r\n";
-        os.write(message.getBytes());
+        try {
+            os.write(message.getBytes());
+            os.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

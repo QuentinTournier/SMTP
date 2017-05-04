@@ -1,5 +1,6 @@
 package Client;
 
+import Utils.IOUtils;
 import Utils.Message;
 
 import javax.net.ssl.SSLSocket;
@@ -8,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.Socket;
 import java.util.ArrayList;
 
 
@@ -18,13 +20,12 @@ import java.util.ArrayList;
 public class Client {
 
     //Attributes
-    private SSLSocket clientSocket;
-    private PrintWriter output;
-    private BufferedReader input;
+    private Socket clientSocket;
     private String state;
     private String hostName;
     private int port;
     private BufferedReader inFromUser;
+    private IOUtils ioSocket;
 
     //Constructors
     public Client(String hostName, int port) {
@@ -32,6 +33,13 @@ public class Client {
         this.port = port;
         this.state = "stopped";
         this.inFromUser = new BufferedReader(new InputStreamReader(System.in));
+        try {
+        this.clientSocket = new Socket(this.hostName, this.port);
+        //Streams
+            this.ioSocket = new IOUtils(this.clientSocket);
+        } catch (IOException e) {
+            System.out.println("IAMGROOT "+e);
+        }
     }
 
     //Methods
@@ -39,7 +47,7 @@ public class Client {
     public void run() {
         String sentence;
         System.out.println("SMTP Client V0.01");
-        this.initialize();
+//        this.initialize();
         this.connect();
 
         while(!this.state.equals("waitingForQuit")){
@@ -50,8 +58,8 @@ public class Client {
             // Send the sender to the server
             if(!this.state.equals("waitingForQuit")) {
                 sentence = "MAIL FROM " + message.getSender();
-                this.send(sentence);
-                sentence = this.read();
+                ioSocket.send(sentence);
+                sentence = ioSocket.read();
                 if (sentence.startsWith("250")) {
                     this.state = "sendRecipients";
                 } else {
@@ -64,8 +72,8 @@ public class Client {
             for (String s : message.getRecipients()) {
                 if (!this.state.equals("waitingForQuit")) {
                     sentence = "RCPT " + s;
-                    this.send(sentence);
-                    sentence = this.read();
+                    ioSocket.send(sentence);
+                    sentence = ioSocket.read();
                     if (!sentence.startsWith("503")) {
                         System.out.println("Error, shutting down...");
                         this.state = "waitingForQuit";
@@ -78,8 +86,8 @@ public class Client {
             // Send the datas to the server
             if(!this.state.equals("waitingForQuit")) {
                 sentence = "DATA " + message.getText();
-                this.send(sentence);
-                sentence = this.read();
+                ioSocket.send(sentence);
+                sentence = ioSocket.read();
                 if (sentence.startsWith("354")) {
                     this.state = "ready";
                 } else {
@@ -98,29 +106,15 @@ public class Client {
     private void initialize() {
         try {
             //Socket
-            SSLSocketFactory fact = (SSLSocketFactory) SSLSocketFactory.getDefault();
-            this.clientSocket = (SSLSocket) fact.createSocket(String.valueOf(this.hostName), this.port);
+//            SSLSocketFactory fact = (SSLSocketFactory) SSLSocketFactory.getDefault();
+//            this.clientSocket = (SSLSocket) fact.createSocket(String.valueOf(this.hostName), this.port);
+            this.clientSocket = new Socket(this.hostName, this.port);
 
             //Setting ciphers
-            String[] supportedCiphers = clientSocket.getSupportedCipherSuites();
-            ArrayList<String> enabledCiphers = new ArrayList<>();
-
-            //Checking ciphers
-            for (String s : supportedCiphers) {
-                if (s.contains("anon")) {
-                    enabledCiphers.add(s);
-                }
-            }
-
-            String[] ciphersToSet = new String[enabledCiphers.size()];
-            ciphersToSet = enabledCiphers.toArray(ciphersToSet);
-
-            this.clientSocket.setEnabledCipherSuites(ciphersToSet);
-            this.clientSocket.setNeedClientAuth(true);
+//            this.clientSocket.setEnabledCipherSuites(clientSocket.getSupportedCipherSuites());
 
             //Streams
-            this.output = new PrintWriter(this.clientSocket.getOutputStream());
-            this.input = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
+            this.ioSocket = new IOUtils(this.clientSocket);
 
             //State
             this.state = "initialisation";
@@ -188,15 +182,15 @@ public class Client {
     // connect to the server
     private void connect() {
         System.out.println("Waiting for server ...");
-        String received = this.read();
+        String received = ioSocket.read();
         if(received.startsWith("220")){
             System.out.println("Server joined.");
-            this.send("EHLO");
+            ioSocket.send("EHLO client");
             this.state = "ready";
         }
         else{
             System.out.println("Unable to contact server.");
-            this.state = "stopped";
+            this.state = "waitingForQuit";
         }
     }
 
@@ -211,7 +205,7 @@ public class Client {
         System.out.println("Closed");
     }
 
-    // receive and return the server's message
+   /* // receive and return the server's message
     private String read() {
         String line = "";
         try {
@@ -226,7 +220,7 @@ public class Client {
     private void send(String sentence) {
         this.output.println(sentence);
         this.output.flush();
-    }
+    }*/
 
     // Check if the user wants to quit the application
     private void type(){

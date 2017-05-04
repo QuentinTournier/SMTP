@@ -47,11 +47,14 @@ public class ThreadServer implements Runnable{
             int state;
             boolean ehlo = false;
             boolean quit = false;
-            System.out.println("Connected");
-
+            System.out.println("Trying to connect");
             ioSocket.send("220 " + domain + " Simple Main Transfer Service Ready");
             while(!ehlo && !quit){
                 message = ioSocket.read();
+                if(message.equals("quitnonsafe")){
+                    quit = true;
+                    break;
+                }
                 if(message.startsWith("EHLO")){
                     cmd = message.split(" ");
                     if(cmd.length > 1) {
@@ -69,6 +72,9 @@ public class ThreadServer implements Runnable{
             state = WAITINGMAIL;
             while(!quit){
                 message = ioSocket.read();
+                if(message.equals("quitnonsafe")){
+                    break;
+                }
                 if(state == LISTENINGDATA){
                     boolean endOfMessage = addLine(message);
                     if (endOfMessage){
