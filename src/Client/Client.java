@@ -46,6 +46,15 @@ public class Client {
 
         while(!this.state.equals("waitingForQuit")){
 
+//            switch(state){
+//                case "ready":
+//
+//                    break;
+//
+//                case "sendRecipients":
+//                    break;
+//            }
+
             // Write your message
             Message message = this.typeMessage();
 
@@ -57,7 +66,7 @@ public class Client {
                 if (sentence.startsWith("250")) {
                     this.state = "sendRecipients";
                 } else {
-                    System.out.println("Error, shutting down...");
+                    System.out.println("Error : Username required.");
                     this.state = "waitingForQuit";
                 }
             }
@@ -79,7 +88,7 @@ public class Client {
                 ioSocket.send(sentence);
                 sentence = ioSocket.read();
                 if (sentence.startsWith("354")) {
-                    ioSocket.send(message.getText());
+                    ioSocket.send(message.getData());
                     this.state = "ready";
                 }
                 else {
@@ -115,6 +124,7 @@ public class Client {
     private Message typeMessage() {
 
         String sender = "";
+        String subject = "";
         ArrayList<String> recipients = new ArrayList<>();
         StringBuilder mailText = new StringBuilder();
 
@@ -150,6 +160,16 @@ public class Client {
             e.printStackTrace();
         }
 
+        //Mail Subject
+        System.out.println("Please enter the subject of the mail");
+        try {
+            String s = this.inFromUser.readLine();
+            subject = s;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         //Mail Text
         System.out.println("Mail text. Enter . to finish.");
         try {
@@ -165,7 +185,7 @@ public class Client {
             e.printStackTrace();
         }
 
-        return new Message(sender, recipients, mailText.toString());
+        return new Message(sender, recipients, subject, mailText.toString());
     }
 
     // connect to the server
