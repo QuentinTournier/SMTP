@@ -21,6 +21,7 @@ public class ServeurMain{
             while(true){
                 //SSLSocket connexion = (SSLSocket) server.accept();
                 Socket connexion = server.accept();
+                System.out.println("Client connected : " + connexion.getRemoteSocketAddress());
                 ThreadServer ts = new ThreadServer(connexion, "serveur1.fr");
                 new Thread(ts).start();
             }

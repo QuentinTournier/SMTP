@@ -48,7 +48,6 @@ public class ThreadServer implements Runnable{
             int state;
             boolean ehlo = false;
             boolean quit = false;
-            System.out.println("Client connected : " + connexion.getRemoteSocketAddress() + " : " + connexion.getPort());
             ioSocket.send("220 " + domain + " Simple Main Transfer Service Ready");
             while(!ehlo && !quit){
                 message = ioSocket.read();
