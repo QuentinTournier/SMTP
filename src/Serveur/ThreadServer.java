@@ -80,7 +80,7 @@ public class ThreadServer implements Runnable{
                     boolean endOfMessage = addLine(message);
                     if (endOfMessage){
                         state = WAITINGMAIL;
-                        String messageToWrite = "----\r\nFROM : "+ sender+ "\r\n";
+                        String messageToWrite = "----\r\n";
                         messageToWrite += mail + "\r\n";
                         for (String recipient: recipients) {
                             String userName = recipient.split("@")[0];
