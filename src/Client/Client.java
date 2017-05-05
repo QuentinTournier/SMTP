@@ -41,8 +41,6 @@ public class Client {
     public void run() {
         String sentence;
         System.out.println("SMTP Client V0.01");
-        this.initialize();
-        this.connect();
 
         while(!this.state.equals("waitingForQuit")){
 
@@ -57,6 +55,8 @@ public class Client {
 
             // Write your message
             Message message = this.typeMessage();
+            this.initialize();
+            this.connect();
 
             // Send the sender to the server
             if(!this.state.equals("waitingForQuit")) {
@@ -98,6 +98,7 @@ public class Client {
             }
 
             // Ask if the user wants to write an other message
+            this.closeConnection();
             System.out.println("Write an other message ? [Y/n]");
             type();
         }
@@ -209,14 +210,12 @@ public class Client {
         }
     }
 
-    //Stop the client
-    public void stop() {
-        System.out.println("Closing...");
+    public void closeConnection() {
         try {
             ioSocket.send("QUIT");
             String s = ioSocket.read();
             if(s.startsWith("221")){
-                System.out.println("Closed");
+                System.out.println("Closing connection.");
             }
             this.clientSocket.close();
         } catch (IOException e) {
