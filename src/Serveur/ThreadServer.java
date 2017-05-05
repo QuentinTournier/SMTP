@@ -48,7 +48,7 @@ public class ThreadServer implements Runnable{
             int state;
             boolean ehlo = false;
             boolean quit = false;
-            System.out.println("Trying to connect");
+            System.out.println("Client connected : " + connexion.getRemoteSocketAddress() + " : " + connexion.getPort());
             ioSocket.send("220 " + domain + " Simple Main Transfer Service Ready");
             while(!ehlo && !quit){
                 message = ioSocket.read();
@@ -89,6 +89,7 @@ public class ThreadServer implements Runnable{
                                 Files.write(file,messageToWrite.getBytes(), StandardOpenOption.APPEND);
                             else
                                 Files.write(file,messageToWrite.getBytes());
+                            System.out.println("Mail received in /mails/"+userName+".txt");
                         }
                         mail = "";
                     }

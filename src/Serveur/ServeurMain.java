@@ -15,8 +15,9 @@ public class ServeurMain{
     public static void main(String[] args) {
         try {
             //SSLServerSocket server = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(110);
-            ServerSocket server = new ServerSocket(110);
+            ServerSocket server = new ServerSocket(1100);
             //server.setEnabledCipherSuites(server.getSupportedCipherSuites());
+            System.out.println("Server launched on port 1100.");
             while(true){
                 //SSLSocket connexion = (SSLSocket) server.accept();
                 Socket connexion = server.accept();
