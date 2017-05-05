@@ -89,6 +89,7 @@ public class Client {
                 sentence = ioSocket.read();
                 if (sentence.startsWith("354")) {
                     ioSocket.send(message.getData());
+                    System.out.println("Mail sent.");
                     this.state = "ready";
                 }
                 else {
